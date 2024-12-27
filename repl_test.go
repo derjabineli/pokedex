@@ -43,7 +43,3 @@ func TestCleanInput(t *testing.T) {
 	  }
   }
 }
-
-func TestMap(t *testing.T) {
-  
-}

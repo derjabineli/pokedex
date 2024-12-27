@@ -16,11 +16,17 @@ type Cache struct {
 }
 
 func (c *Cache) Add(key string, val []byte) {
-	entry := cacheEntry{createdAt: time.Now(), val: val}
-	c.entry[key] = entry
+	c.mux.Lock()
+	defer c.mux.Unlock()
+    
+    entry := cacheEntry{createdAt: time.Now(), val: val}
+    c.entry[key] = entry
 }
 
 func (c *Cache) Get(key string) ([]byte, bool) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
 	entry, exists  := c.entry[key]
 	if !exists {
 		return nil, exists
@@ -29,25 +35,31 @@ func (c *Cache) Get(key string) ([]byte, bool) {
 }
 
 func (c *Cache) reapLoop(interval time.Duration) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
 	for key, entry := range c.entry {
-		if (entry.createdAt - time.Now()) > interval {
+		expiryTime := entry.createdAt.Add(interval)
+		if currentTime := time.Now(); currentTime.After(expiryTime) {
 			delete(c.entry, key)
 		}
 	}
 }
 
-func NewCache(interval time.Duration) {
-	mux := &sync.Mutex{}
-	cache := Cache{mux: mux}
-	cache.reapLoop(interval)
-
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			cache.reapLoop(interval)
-		}
-	}
+func NewCache(interval time.Duration) *Cache {
+    c := &Cache{
+        entry: make(map[string]cacheEntry),
+        mux:   &sync.Mutex{},
+    }
+    go func() {
+         ticker := time.NewTicker(interval)
+         defer ticker.Stop()
+         for {
+             select {
+             case <-ticker.C:
+                 c.reapLoop(interval)
+             }
+         }
+    }()
+    return c
 }
