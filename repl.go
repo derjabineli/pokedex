@@ -35,9 +35,13 @@ ____________________________________________________________________________
     }
 
     command, exists  := getCommands()[input[0]]
+	param := ""
+	if len(input) == 2 {
+		param = input[1]
+	}
     
 	if exists {
-		err := command.callback(config)
+		err := command.callback(config, param)
 		if err != nil{
 			fmt.Println(err)
 		}
@@ -66,6 +70,11 @@ func getCommands() map[string]cliCommand {
 		name: "mapb",
 		description: "Display the names of the previously displayed location areas",
 		callback: commandMapb,
+	  },
+	  "explore": {
+		name: "explore",
+		description: "Displays pokemon at a provided location",
+		callback: commandExplore,
 	  },
 	  "help": {
 		name: "help",
