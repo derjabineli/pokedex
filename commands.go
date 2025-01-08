@@ -21,6 +21,7 @@ type Config struct {
   Next string
   Previous string
   Cache *pokecache.Cache
+  Pokemon map[string]pokeapi.Pokemon
 }
 
 func commandExit(cfg *Config, param string) error {
@@ -141,3 +142,15 @@ func printPokemon(city string, result pokeapi.LocationData) {
   }
 }
 
+func commandCatch(cfg *Config, pokemon string) error {
+  fmt.Printf("Throwing a Pokeball at %v...\n", pokemon)
+
+  data, err := pokeapi.CatchPokemon(pokemon)
+  if err != nil {
+    fmt.Printf("%v escaped!\n", pokemon)
+  } else {
+    fmt.Printf("%v was caught!\n", pokemon)
+    cfg.Pokemon[pokemon] = data
+  }
+  return nil
+}

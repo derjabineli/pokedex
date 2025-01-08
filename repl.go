@@ -7,11 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/derjabineli/pokedex/internal/pokeapi"
 	"github.com/derjabineli/pokedex/internal/pokecache"
 )
 
 func startRepl() {  
-	config := &Config{Next: "https://pokeapi.co/api/v2/location-area", Previous: "", Cache: pokecache.NewCache(30 * time.Second)}
+	config := &Config{Next: "https://pokeapi.co/api/v2/location-area", Previous: "", Cache: pokecache.NewCache(30 * time.Second), Pokemon: make(map[string]pokeapi.Pokemon)}
 	scanner := bufio.NewScanner(os.Stdin)
 
 	fmt.Println(` ________  ________  ___  __    _______   ________  _______      ___    ___ 
@@ -85,6 +86,11 @@ func getCommands() map[string]cliCommand {
 		name: "exit",
 		description: "Exit the Pokedex",
 		callback: commandExit,
+	  },
+	  "catch": {
+		name: "catch",
+		description: "Tries to catch a Pokemon. If successful the pokemon is stored in your Pokedex.",
+		callback: commandCatch,
 	  },
 	}
 }
