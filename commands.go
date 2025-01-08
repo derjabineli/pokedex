@@ -175,3 +175,14 @@ Weight: %v
   }
   return nil
 }
+
+func commandPokedex(cfg *Config, param string) error {
+  if len(cfg.Pokemon) == 0 {
+    return fmt.Errorf("no pokemon in pokedex")
+  }
+  fmt.Print("Your Pokedex:\n")
+  for name := range cfg.Pokemon {
+    fmt.Printf("  - %v\n", name)
+  }
+  return nil
+}
