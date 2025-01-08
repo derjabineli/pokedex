@@ -147,10 +147,31 @@ func commandCatch(cfg *Config, pokemon string) error {
 
   data, err := pokeapi.CatchPokemon(pokemon)
   if err != nil {
-    fmt.Printf("%v escaped!\n", pokemon)
+    return fmt.Errorf("%v escaped!\n", pokemon)
   } else {
     fmt.Printf("%v was caught!\n", pokemon)
     cfg.Pokemon[pokemon] = data
+    return nil
+  }
+}
+
+func commandInspect(cfg *Config, pokemon string) error {
+  data, exists := cfg.Pokemon[pokemon]
+  if !exists {
+    return fmt.Errorf("you have not caught that pokemon")
+  }
+  fmt.Printf(`Name: %v 
+Height: %v
+Weight: %v
+`, data.Name, data.Height, data.Weight)
+
+  fmt.Print("Stats:\n")
+  for i := range data.Stats {
+    fmt.Printf("  -%v: %v\n", data.Stats[i].Stat.Name, data.Stats[i].BaseStat)
+  }
+  fmt.Print("Types:\n")
+  for i := range data.Types {
+    fmt.Printf("  - %v\n", data.Types[i].Type.Name)
   }
   return nil
 }
