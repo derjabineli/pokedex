@@ -14,7 +14,7 @@ var Commands map[string]cliCommand
 type cliCommand struct {
   name string
   description string
-  callback func(*Config) error
+  callback func(*Config, string) error
 }
 
 type Config struct {
@@ -23,13 +23,19 @@ type Config struct {
   Cache *pokecache.Cache
 }
 
-func commandExit(*Config) error {
+func commandExit(cfg *Config, param string) error {
+  if param != "" {
+    return fmt.Errorf("too many values passed")
+  }
   fmt.Print("Closing the Pokedex... Goodbye!\n")
   os.Exit(0)
   return nil
 }
 
-func commandHelp(*Config) error {
+func commandHelp(cfg *Config, param string) error {
+  if param != "" {
+    return fmt.Errorf("too many values passed")
+  }
   fmt.Println()
   fmt.Print("Welcome to the Pokedex! \n")
   fmt.Print("Usage:\n\n")
@@ -39,7 +45,11 @@ func commandHelp(*Config) error {
   return nil
 }
 
-func commandMap(cfg *Config) error {
+func commandMap(cfg *Config, param string) error {
+  if param != "" {
+    return fmt.Errorf("too many values passed")
+  }
+
   result := pokeapi.Location{}
 
   entry, exists := cfg.Cache.Get(cfg.Next)
@@ -52,9 +62,7 @@ func commandMap(cfg *Config) error {
     result = pokeapi.GetLocation(cfg.Next, cfg.Cache)
   }
 
-  printResults(result)
-
-  fmt.Printf("Previous: %v \n Next: %v \n\n", result.Previous, result.Next)
+  printLocations(result)
   
   if cfg.Previous == "" {
     cfg.Previous = cfg.Next
@@ -66,7 +74,11 @@ func commandMap(cfg *Config) error {
   return nil
 }
 
-func commandMapb(cfg *Config) error {
+func commandMapb(cfg *Config, param string) error {
+  if param != "" {
+    return fmt.Errorf("too many values passed")
+  }
+
   if cfg.Previous == "" {
     fmt.Println("you're on the first page")
     return nil
@@ -83,14 +95,49 @@ func commandMapb(cfg *Config) error {
     }
     cfg.Previous = result.Previous
     cfg.Next = result.Next
-    printResults(result)
+    printLocations(result)
       return nil
   }
 }
 
-func printResults(result pokeapi.Location) {
+func printLocations(result pokeapi.Location) {
   for _, location := range result.Results {
     fmt.Println(location.Name)
+  }
+}
+
+func commandExplore(cfg *Config, param string) error {
+  if param == "" {
+    fmt.Print("Please provide a location that you'd like to explore \n")
+    return nil
+  }
+
+  result := pokeapi.LocationData{}
+
+  location, exists := cfg.Cache.Get(param)
+  if exists {
+    err := json.Unmarshal(location, &result)
+	    if err != nil {
+		    fmt.Println(err)
+	    }
+    } else {
+      result = pokeapi.ExploreLocation(param, cfg.Cache)
+  }
+
+  if result.Name != "" {
+    printPokemon(param, result)
+    return nil
+  } else {
+    fmt.Printf("Hmm.. %v doesn't seem to exist\n", param)
+    return nil
+  }
+}
+
+func printPokemon(city string, result pokeapi.LocationData) {
+  fmt.Printf("Exploring %v...\n", city)
+  fmt.Println("Found Pokemon:")
+  for _, pokemon := range result.PokemonEncounters {
+    fmt.Printf("- %v\n", pokemon.Pokemon.Name)
   }
 }
 
